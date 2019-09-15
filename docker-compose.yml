@@ -1,0 +1,49 @@
+version: "3.4"
+
+services:
+
+  rails:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      args:
+        RUBY_VERSION: ${RUBY_VERSION?}
+    volumes:
+      - .:/src
+      - bundle:/usr/local/bundle
+    ports:
+      - "${RAILS_APP_PORT:-3000}:3000"
+    networks:
+      - local-network
+    depends_on:
+      - mysql
+    links:
+      - mysql
+    environment:
+      RAILS_ENV: development
+      DATABASE_HOST: mysql
+    command: ["bundle", "exec", "pumactl", "start"]
+
+  # https://hub.docker.com/_/mysql/
+  mysql:
+    image: mysql:${MYSQL_VERSION:-5.7}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    networks:
+      - local-network
+    restart: always
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+
+
+volumes:
+  mysql-data:
+    driver: local
+  bundle:
+    driver: local
+
+
+networks:
+  local-network:
